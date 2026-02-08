@@ -1,5 +1,7 @@
 /**
  * Scene creation, lighting, shadows, post-processing, and environment setup.
+ * Configured for a bright, airy open-plan office with strong natural light
+ * from large floor-to-ceiling windows on the left wall.
  */
 
 import { Engine } from "@babylonjs/core/Engines/engine";
@@ -33,8 +35,8 @@ export class SceneFactory {
     });
 
     const scene = new Scene(engine);
-    scene.clearColor = new Color4(0.53, 0.72, 0.88, 1.0);
-    scene.ambientColor = new Color3(0.15, 0.15, 0.18);
+    scene.clearColor = new Color4(0.65, 0.78, 0.92, 1.0);
+    scene.ambientColor = new Color3(0.2, 0.2, 0.22);
     scene.collisionsEnabled = true;
     scene.gravity = new Vector3(0, -9.81 / 60, 0);
 
@@ -48,46 +50,49 @@ export class SceneFactory {
   }
 
   private static setupLighting(scene: Scene): void {
-    // Ambient hemisphere light — simulates sky dome
+    // Bright ambient hemisphere light — simulates bright daylight sky
     const ambient = new HemisphericLight(
       "ambientLight",
       new Vector3(0, 1, 0),
       scene
     );
-    ambient.intensity = 0.5;
-    ambient.diffuse = new Color3(0.95, 0.95, 1.0);
-    ambient.groundColor = new Color3(0.3, 0.28, 0.25);
-    ambient.specular = new Color3(0.1, 0.1, 0.1);
+    ambient.intensity = 0.65;
+    ambient.diffuse = new Color3(0.98, 0.97, 1.0);
+    ambient.groundColor = new Color3(0.4, 0.38, 0.35);
+    ambient.specular = new Color3(0.15, 0.15, 0.15);
 
-    // Overhead fill lights — simulating recessed ceiling lighting
+    // Overhead fill lights — larger office needs more coverage
     const ceilingPositions = [
-      new Vector3(-2.5, 2.9, 4),
-      new Vector3(2.5, 2.9, 4),
-      new Vector3(-2.5, 2.9, 8),
-      new Vector3(2.5, 2.9, 8),
-      new Vector3(-2.5, 2.9, 12),
-      new Vector3(2.5, 2.9, 12),
+      new Vector3(-4, 3.1, 4),
+      new Vector3(0, 3.1, 4),
+      new Vector3(4, 3.1, 4),
+      new Vector3(-4, 3.1, 9),
+      new Vector3(0, 3.1, 9),
+      new Vector3(4, 3.1, 9),
+      new Vector3(-4, 3.1, 14),
+      new Vector3(0, 3.1, 14),
+      new Vector3(4, 3.1, 14),
     ];
 
     ceilingPositions.forEach((pos, i) => {
       const light = new PointLight(`ceilingLight${i}`, pos, scene);
-      light.intensity = 0.4;
+      light.intensity = 0.35;
       light.diffuse = new Color3(1.0, 0.97, 0.92);
-      light.range = 8;
+      light.range = 10;
     });
   }
 
   private static createSunlight(scene: Scene): DirectionalLight {
-    // Sunlight coming through windows on the left wall
+    // Strong sunlight coming through large windows on the left wall
     const sun = new DirectionalLight(
       "sunLight",
-      new Vector3(1, -0.7, 0.3).normalize(),
+      new Vector3(1, -0.5, 0.2).normalize(),
       scene
     );
-    sun.intensity = 1.2;
-    sun.diffuse = new Color3(1.0, 0.96, 0.88);
-    sun.specular = new Color3(1.0, 0.98, 0.92);
-    sun.position = new Vector3(-8, 6, 7);
+    sun.intensity = 1.6;
+    sun.diffuse = new Color3(1.0, 0.97, 0.9);
+    sun.specular = new Color3(1.0, 0.98, 0.94);
+    sun.position = new Vector3(-12, 8, 9);
 
     return sun;
   }
@@ -98,7 +103,7 @@ export class SceneFactory {
     generator.filteringQuality = ShadowGenerator.QUALITY_MEDIUM;
     generator.bias = 0.001;
     generator.normalBias = 0.02;
-    generator.darkness = 0.4;
+    generator.darkness = 0.35;
 
     return generator;
   }
@@ -111,7 +116,7 @@ export class SceneFactory {
         scene
       );
       scene.environmentTexture = envTexture;
-      scene.environmentIntensity = 0.4;
+      scene.environmentIntensity = 0.5;
     } catch {
       // Graceful fallback — PBR will work without environment reflections
       console.warn("Environment texture unavailable; PBR reflections disabled.");
@@ -124,13 +129,13 @@ export class SceneFactory {
       blurKernelSize: 32,
       mainTextureFixedSize: 512,
     });
-    glow.intensity = 0.3;
+    glow.intensity = 0.25;
 
-    // Tone mapping and exposure
+    // Tone mapping and exposure — bright, airy feel
     scene.imageProcessingConfiguration.toneMappingEnabled = true;
     scene.imageProcessingConfiguration.toneMappingType =
       ImageProcessingConfiguration.TONEMAPPING_ACES;
-    scene.imageProcessingConfiguration.exposure = 1.1;
-    scene.imageProcessingConfiguration.contrast = 1.15;
+    scene.imageProcessingConfiguration.exposure = 1.25;
+    scene.imageProcessingConfiguration.contrast = 1.1;
   }
 }

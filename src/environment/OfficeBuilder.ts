@@ -1,6 +1,9 @@
 /**
  * Constructs the office shell: floor, ceiling, walls, windows, entrance.
- * Office dimensions: 10m wide (x: -5..+5) × 14m deep (z: 0..14) × 3m tall.
+ * Open-plan co-working space with large windows, glass partitions, and
+ * industrial-modern aesthetic matching the reference photo.
+ *
+ * Office dimensions: 16m wide (x: -8..+8) × 18m deep (z: 0..18) × 3.2m tall.
  */
 
 import { Scene } from "@babylonjs/core/scene";
@@ -15,14 +18,15 @@ import { MaterialFactory } from "./MaterialFactory";
 import "@babylonjs/core/Meshes/Builders/boxBuilder";
 import "@babylonjs/core/Meshes/Builders/groundBuilder";
 import "@babylonjs/core/Meshes/Builders/planeBuilder";
+import "@babylonjs/core/Meshes/Builders/cylinderBuilder";
 
 export const OFFICE = {
-  WIDTH: 10,
-  DEPTH: 14,
-  HEIGHT: 3,
+  WIDTH: 16,
+  DEPTH: 18,
+  HEIGHT: 3.2,
   WALL_THICKNESS: 0.15,
-  ENTRANCE_WIDTH: 1.6,
-  ENTRANCE_HEIGHT: 2.4,
+  ENTRANCE_WIDTH: 1.8,
+  ENTRANCE_HEIGHT: 2.6,
 } as const;
 
 export class OfficeBuilder {
@@ -41,9 +45,12 @@ export class OfficeBuilder {
     this.createCeiling();
     this.createWalls();
     this.createWindows();
+    this.createWindowFrames();
+    this.createRadiators();
     this.createEntranceDoorFrame();
     this.createBaseboards();
     this.createCeilingLights();
+    this.createGlassPartitions();
     return this.root;
   }
 
@@ -81,7 +88,7 @@ export class OfficeBuilder {
     // Back wall (z = DEPTH)
     this.createWallSegment("wall-back", w + 2 * t, h, t, new Vector3(0, h / 2, d + t / 2));
 
-    // Left wall (x = -WIDTH/2) — with window gaps
+    // Left wall (x = -WIDTH/2) — with large window gaps
     this.createLeftWall();
 
     // Right wall (x = +WIDTH/2) — solid
@@ -101,28 +108,28 @@ export class OfficeBuilder {
     const d = OFFICE.DEPTH;
     const x = -OFFICE.WIDTH / 2 - t / 2;
 
-    // Window layout: two windows on left wall
-    // Window 1: z = 3..5 (near secretary)
-    // Window 2: z = 9..11 (near developer)
-    const windowSill = 0.9;
-    const windowTop = 2.4;
-    const windowWidth = 2.0;
+    // Large floor-to-ceiling windows on left wall
+    // Window openings: 0.3m sill, up to 2.8m top (nearly floor-to-ceiling)
+    // 4 large window bays with narrow mullions between them
+    const windowSill = 0.3;
+    const windowTop = 2.8;
 
-    const segments: { name: string; height: number; depth: number; y: number; z: number }[] = [
-      // Below windows — full length strip
-      { name: "left-below", height: windowSill, depth: d + 2 * t, y: windowSill / 2, z: d / 2 },
-      // Above windows — full length strip
-      { name: "left-above", height: h - windowTop, depth: d + 2 * t, y: windowTop + (h - windowTop) / 2, z: d / 2 },
-      // Between start and window 1
-      { name: "left-seg0", height: windowTop - windowSill, depth: 3, y: windowSill + (windowTop - windowSill) / 2, z: 1.5 },
-      // Between window 1 and window 2
-      { name: "left-seg1", height: windowTop - windowSill, depth: 4, y: windowSill + (windowTop - windowSill) / 2, z: 7 },
-      // After window 2
-      { name: "left-seg2", height: windowTop - windowSill, depth: 3, y: windowSill + (windowTop - windowSill) / 2, z: 12.5 },
-    ];
+    // Below windows — full length strip (thin sill)
+    this.createWallSegment("left-below", t, windowSill, d + 2 * t, new Vector3(x, windowSill / 2, d / 2));
+    // Above windows — full length strip
+    this.createWallSegment("left-above", t, h - windowTop, d + 2 * t, new Vector3(x, windowTop + (h - windowTop) / 2, d / 2));
 
-    for (const seg of segments) {
-      this.createWallSegment(seg.name, t, seg.height, seg.depth, new Vector3(x, seg.y, seg.z));
+    // Mullion columns between window bays
+    const mullionWidth = 0.15;
+    const mullionH = windowTop - windowSill;
+    const mullionY = windowSill + mullionH / 2;
+    const mullionPositions = [0, 4.5, 9, 13.5, 18];
+
+    for (let i = 0; i < mullionPositions.length; i++) {
+      this.createWallSegment(
+        `left-mullion-${i}`, t, mullionH, mullionWidth,
+        new Vector3(x, mullionY, mullionPositions[i])
+      );
     }
   }
 
@@ -173,18 +180,20 @@ export class OfficeBuilder {
   }
 
   private createWindows(): void {
-    // Emissive window panes on left wall
-    const windowConfigs = [
-      { z: 4, width: 2.0 },
-      { z: 10, width: 2.0 },
-    ];
-
-    const windowSill = 0.9;
-    const windowHeight = 1.5;
+    // 4 large window panes on left wall (floor-to-ceiling style)
+    const windowSill = 0.3;
+    const windowHeight = 2.5;
     const x = -OFFICE.WIDTH / 2 - 0.01;
 
-    for (let i = 0; i < windowConfigs.length; i++) {
-      const cfg = windowConfigs[i];
+    const windowBays = [
+      { z: 2.25, width: 4.2 },
+      { z: 6.75, width: 4.2 },
+      { z: 11.25, width: 4.2 },
+      { z: 15.75, width: 4.2 },
+    ];
+
+    for (let i = 0; i < windowBays.length; i++) {
+      const cfg = windowBays[i];
       const pane = MeshBuilder.CreatePlane(
         `window-pane-${i}`,
         { width: cfg.width, height: windowHeight },
@@ -194,6 +203,54 @@ export class OfficeBuilder {
       pane.rotation.y = Math.PI / 2;
       pane.material = this.materials.get("glass-window");
       pane.parent = this.root;
+    }
+  }
+
+  private createWindowFrames(): void {
+    const x = -OFFICE.WIDTH / 2 + 0.01;
+    const frameMat = this.materials.get("window-frame");
+    const windowSill = 0.3;
+    const windowTop = 2.8;
+
+    // Horizontal sill and header bars across the full wall
+    const sill = MeshBuilder.CreateBox("window-sill", {
+      width: 0.08, height: 0.04, depth: OFFICE.DEPTH,
+    }, this.scene);
+    sill.position = new Vector3(x, windowSill, OFFICE.DEPTH / 2);
+    sill.material = frameMat;
+    sill.parent = this.root;
+
+    const header = MeshBuilder.CreateBox("window-header", {
+      width: 0.08, height: 0.04, depth: OFFICE.DEPTH,
+    }, this.scene);
+    header.position = new Vector3(x, windowTop, OFFICE.DEPTH / 2);
+    header.material = frameMat;
+    header.parent = this.root;
+  }
+
+  private createRadiators(): void {
+    // Radiators below windows on left wall
+    const mat = this.materials.get("radiator");
+    const x = -OFFICE.WIDTH / 2 + 0.15;
+    const radiatorPositions = [2.25, 6.75, 11.25, 15.75];
+
+    for (let i = 0; i < radiatorPositions.length; i++) {
+      const radiator = MeshBuilder.CreateBox(`radiator-${i}`, {
+        width: 0.06, height: 0.5, depth: 2.0,
+      }, this.scene);
+      radiator.position = new Vector3(x, 0.28, radiatorPositions[i]);
+      radiator.material = mat;
+      radiator.parent = this.root;
+
+      // Radiator fins (simplified)
+      for (let f = 0; f < 8; f++) {
+        const fin = MeshBuilder.CreateBox(`radiator-fin-${i}-${f}`, {
+          width: 0.04, height: 0.44, depth: 0.02,
+        }, this.scene);
+        fin.position = new Vector3(x, 0.28, radiatorPositions[i] - 0.8 + f * 0.22);
+        fin.material = mat;
+        fin.parent = this.root;
+      }
     }
   }
 
@@ -248,34 +305,66 @@ export class OfficeBuilder {
     right.position = new Vector3(OFFICE.WIDTH / 2 - bd / 2, bh / 2, OFFICE.DEPTH / 2);
     right.material = mat;
     right.parent = this.root;
-
-    // Left wall
-    const left = MeshBuilder.CreateBox("baseboard-left", {
-      width: bd, height: bh, depth: OFFICE.DEPTH,
-    }, this.scene);
-    left.position = new Vector3(-OFFICE.WIDTH / 2 + bd / 2, bh / 2, OFFICE.DEPTH / 2);
-    left.material = mat;
-    left.parent = this.root;
   }
 
   private createCeilingLights(): void {
     const mat = this.materials.get("ceiling-light-fixture");
     const positions = [
-      new Vector3(-2.5, OFFICE.HEIGHT - 0.02, 4),
-      new Vector3(2.5, OFFICE.HEIGHT - 0.02, 4),
-      new Vector3(-2.5, OFFICE.HEIGHT - 0.02, 8),
-      new Vector3(2.5, OFFICE.HEIGHT - 0.02, 8),
-      new Vector3(-2.5, OFFICE.HEIGHT - 0.02, 12),
-      new Vector3(2.5, OFFICE.HEIGHT - 0.02, 12),
+      new Vector3(-4, OFFICE.HEIGHT - 0.02, 4),
+      new Vector3(0, OFFICE.HEIGHT - 0.02, 4),
+      new Vector3(4, OFFICE.HEIGHT - 0.02, 4),
+      new Vector3(-4, OFFICE.HEIGHT - 0.02, 9),
+      new Vector3(0, OFFICE.HEIGHT - 0.02, 9),
+      new Vector3(4, OFFICE.HEIGHT - 0.02, 9),
+      new Vector3(-4, OFFICE.HEIGHT - 0.02, 14),
+      new Vector3(0, OFFICE.HEIGHT - 0.02, 14),
+      new Vector3(4, OFFICE.HEIGHT - 0.02, 14),
     ];
 
     positions.forEach((pos, i) => {
       const fixture = MeshBuilder.CreateBox(`ceiling-light-${i}`, {
-        width: 1.0, height: 0.04, depth: 0.3,
+        width: 1.2, height: 0.04, depth: 0.3,
       }, this.scene);
       fixture.position = pos;
       fixture.material = mat;
       fixture.parent = this.root;
     });
+  }
+
+  private createGlassPartitions(): void {
+    const glassMat = this.materials.get("glass-partition");
+    const frameMat = this.materials.get("metal-black");
+
+    // Glass partition at back of office (visible in background of photo)
+    const partition1 = MeshBuilder.CreatePlane("glass-partition-1", {
+      width: 6, height: 2.8,
+    }, this.scene);
+    partition1.position = new Vector3(2, 1.4, 15);
+    partition1.material = glassMat;
+    partition1.parent = this.root;
+
+    // Frame for partition
+    const frame1 = MeshBuilder.CreateBox("partition-frame-1", {
+      width: 0.04, height: 2.8, depth: 0.04,
+    }, this.scene);
+    frame1.position = new Vector3(-1, 1.4, 15);
+    frame1.material = frameMat;
+    frame1.parent = this.root;
+
+    const frame2 = MeshBuilder.CreateBox("partition-frame-2", {
+      width: 0.04, height: 2.8, depth: 0.04,
+    }, this.scene);
+    frame2.position = new Vector3(5, 1.4, 15);
+    frame2.material = frameMat;
+    frame2.parent = this.root;
+
+    // Second partition at angle
+    const partition2 = MeshBuilder.CreatePlane("glass-partition-2", {
+      width: 5, height: 2.8,
+    }, this.scene);
+    partition2.position = new Vector3(5.5, 1.4, 12);
+    partition2.rotation.y = Math.PI / 2;
+    partition2.material = glassMat;
+    partition2.parent = this.root;
   }
 }

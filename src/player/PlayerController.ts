@@ -17,7 +17,7 @@ export class PlayerController {
   ) {
     this.camera = new UniversalCamera(
       "playerCamera",
-      new Vector3(0, 3, 1.5),
+      new Vector3(0, 3, 2),
       scene
     );
 
