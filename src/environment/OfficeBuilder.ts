@@ -57,7 +57,7 @@ export class OfficeBuilder {
   private createFloor(): void {
     const floor = MeshBuilder.CreateGround(
       "floor",
-      { width: OFFICE.WIDTH, height: OFFICE.DEPTH },
+      { width: OFFICE.WIDTH, height: OFFICE.DEPTH, subdivisions: 1 },
       this.scene
     );
     floor.position = new Vector3(0, 0, OFFICE.DEPTH / 2);

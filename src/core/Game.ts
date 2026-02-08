@@ -48,6 +48,11 @@ export class Game {
       this.player = new PlayerController(this.ctx.scene, this.canvas);
     });
 
+    // SSAO needs an active camera — set up now that player camera exists
+    this.initStep("SSAO", () => {
+      SceneFactory.setupSSAO(this.ctx.scene);
+    });
+
     this.updateLoadingBar(35);
 
     // Environment
@@ -146,9 +151,10 @@ export class Game {
     furniture.createChair("secretary-chair", new Vector3(-4, 0, 6.2), 0);
 
     // Secretary humanoid — woman in tan blazer with brown hair
+    // Position is relative to NPC root (-4, 0, 7), so chair offset is (0, 0, -0.8)
     const secHumanoid = furniture.createSeatedHumanoid({
       name: "secretary-body",
-      position: new Vector3(-4, 0, 6.2),
+      position: new Vector3(0, 0, -0.8),
       rotationY: 0,
       clothingMaterial: "clothing-blazer",
       hairMaterial: "hair-brown",
@@ -164,9 +170,10 @@ export class Game {
     furniture.createChair("developer-chair", new Vector3(3, 0, 6.2), 0);
 
     // Developer humanoid — man in olive hoodie with headphones
+    // Position is relative to NPC root (3, 0, 7), so chair offset is (0, 0, -0.8)
     const devHumanoid = furniture.createSeatedHumanoid({
       name: "developer-body",
-      position: new Vector3(3, 0, 6.2),
+      position: new Vector3(0, 0, -0.8),
       rotationY: 0,
       clothingMaterial: "clothing-hoodie",
       hairMaterial: "hair-dark",
