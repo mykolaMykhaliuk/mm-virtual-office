@@ -138,37 +138,37 @@ export class Game {
   private _furnitureBuilder?: FurnitureBuilder;
 
   private createNPCs(furniture: FurnitureBuilder, materials: MaterialFactory): void {
-    // ── Secretary ───────────────────────────────────────────
+    // ── Secretary (woman at laptop, left desk) ──────────────
     this.secretary = new SecretaryNPC(this.ctx.scene, this.gameState);
-    this.secretary.setPosition(new Vector3(2.5, 0, 4.5));
+    this.secretary.setPosition(new Vector3(-4, 0, 7));
 
-    // Secretary chair (facing entrance, rotated 180deg)
-    furniture.createChair("secretary-chair", new Vector3(2.5, 0, 5.2), Math.PI);
+    // Secretary chair (facing the desk/monitors, toward back wall)
+    furniture.createChair("secretary-chair", new Vector3(-4, 0, 6.2), 0);
 
-    // Secretary humanoid (seated, facing entrance)
+    // Secretary humanoid — woman in tan blazer with brown hair
     const secHumanoid = furniture.createSeatedHumanoid({
       name: "secretary-body",
-      position: new Vector3(2.5, 0, 5.2),
-      rotationY: Math.PI,
-      clothingMaterial: "clothing-blue",
+      position: new Vector3(-4, 0, 6.2),
+      rotationY: 0,
+      clothingMaterial: "clothing-blazer",
       hairMaterial: "hair-brown",
       hasHeadphones: false,
     });
     this.secretary.attachVisuals(secHumanoid);
 
-    // ── Developer ──────────────────────────────────────────
+    // ── Developer (man at dual monitors, right desk) ────────
     this.developer = new DeveloperNPC(this.ctx.scene, this.gameState);
-    this.developer.setPosition(new Vector3(0, 0, 11.5));
+    this.developer.setPosition(new Vector3(3, 0, 7));
 
     // Developer chair (facing monitors/back wall)
-    furniture.createChair("developer-chair", new Vector3(0, 0, 11.2), 0);
+    furniture.createChair("developer-chair", new Vector3(3, 0, 6.2), 0);
 
-    // Developer humanoid (seated, facing monitors)
+    // Developer humanoid — man in olive hoodie with headphones
     const devHumanoid = furniture.createSeatedHumanoid({
       name: "developer-body",
-      position: new Vector3(0, 0, 11.2),
+      position: new Vector3(3, 0, 6.2),
       rotationY: 0,
-      clothingMaterial: "clothing-dark",
+      clothingMaterial: "clothing-hoodie",
       hairMaterial: "hair-dark",
       hasHeadphones: true,
     });
