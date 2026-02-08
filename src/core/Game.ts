@@ -37,43 +37,57 @@ export class Game {
     this.updateLoadingBar(10);
 
     // Core systems
-    this.gameState = new GameState();
-    this.ctx = SceneFactory.create(this.canvas);
-    this.input = new InputManager(this.canvas);
+    this.initStep("GameState", () => { this.gameState = new GameState(); });
+    this.initStep("SceneFactory", () => { this.ctx = SceneFactory.create(this.canvas); });
+    this.initStep("InputManager", () => { this.input = new InputManager(this.canvas); });
 
     this.updateLoadingBar(25);
 
     // Player
-    this.player = new PlayerController(this.ctx.scene, this.canvas);
+    this.initStep("PlayerController", () => {
+      this.player = new PlayerController(this.ctx.scene, this.canvas);
+    });
 
     this.updateLoadingBar(35);
 
     // Environment
-    const materials = new MaterialFactory(this.ctx.scene);
-    const officeBuilder = new OfficeBuilder(this.ctx.scene, materials, this.ctx.shadowGenerator);
-    officeBuilder.build();
+    this.initStep("Environment (materials & office)", () => {
+      const materials = new MaterialFactory(this.ctx.scene);
+      this._materials = materials;
+      const officeBuilder = new OfficeBuilder(this.ctx.scene, materials, this.ctx.shadowGenerator);
+      officeBuilder.build();
+    });
 
     this.updateLoadingBar(50);
 
-    const furnitureBuilder = new FurnitureBuilder(this.ctx.scene, materials, this.ctx.shadowGenerator);
-    furnitureBuilder.build();
+    this.initStep("Furniture", () => {
+      const furnitureBuilder = new FurnitureBuilder(this.ctx.scene, this._materials!, this.ctx.shadowGenerator);
+      this._furnitureBuilder = furnitureBuilder;
+      furnitureBuilder.build();
+    });
 
     this.updateLoadingBar(65);
 
     // NPCs
-    this.createNPCs(furnitureBuilder, materials);
+    this.initStep("NPCs", () => {
+      this.createNPCs(this._furnitureBuilder!, this._materials!);
+    });
 
     this.updateLoadingBar(80);
 
     // Dialogue system
-    this.dialogueSM = new DialogueStateMachine(this.gameState);
-    this.dialogueUI = new DialogueUI(this.dialogueSM);
+    this.initStep("Dialogue system", () => {
+      this.dialogueSM = new DialogueStateMachine(this.gameState);
+      this.dialogueUI = new DialogueUI(this.dialogueSM);
+    });
 
     // Interaction system
-    this.interaction = new InteractionSystem(this.ctx.scene, this.player, this.input);
-    this.interaction.registerNPC(this.secretary);
-    this.interaction.registerNPC(this.developer);
-    this.interaction.onInteract = (npc) => this.startDialogue(npc);
+    this.initStep("Interaction system", () => {
+      this.interaction = new InteractionSystem(this.ctx.scene, this.player, this.input);
+      this.interaction.registerNPC(this.secretary);
+      this.interaction.registerNPC(this.developer);
+      this.interaction.onInteract = (npc) => this.startDialogue(npc);
+    });
 
     // Handle Escape to close dialogue
     this.input.onAction("cancel", () => {
@@ -103,7 +117,25 @@ export class Game {
     window.addEventListener("resize", () => {
       this.ctx.engine.resize();
     });
+
+    // Clean up temp references
+    this._materials = undefined;
+    this._furnitureBuilder = undefined;
   }
+
+  /** Run an init step, wrapping errors with the step name for debug visibility. */
+  private initStep(name: string, fn: () => void): void {
+    try {
+      fn();
+    } catch (err) {
+      console.error(`[Init] ${name} failed:`, err);
+      throw err;
+    }
+  }
+
+  // Temp references used during init to pass between steps
+  private _materials?: MaterialFactory;
+  private _furnitureBuilder?: FurnitureBuilder;
 
   private createNPCs(furniture: FurnitureBuilder, materials: MaterialFactory): void {
     // ── Secretary ───────────────────────────────────────────
