@@ -1,11 +1,19 @@
 /**
  * Application entry point.
  * Initializes the Game once the DOM is ready.
+ *
+ * Append ?debug to the URL to enable the on-screen error overlay.
  */
 
 import { Game } from "./core/Game";
+import { DebugOverlay } from "./core/DebugOverlay";
 
 async function main(): Promise<void> {
+  // Activate debug overlay when ?debug is in the URL
+  if (DebugOverlay.isDebugMode()) {
+    DebugOverlay.init();
+  }
+
   const canvas = document.getElementById("renderCanvas") as HTMLCanvasElement | null;
 
   if (!canvas) {
