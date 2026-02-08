@@ -14,8 +14,9 @@ import { CubeTexture } from "@babylonjs/core/Materials/Textures/cubeTexture";
 import { GlowLayer } from "@babylonjs/core/Layers/glowLayer";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
 
-// Side-effect imports for shadow map support
+// Side-effect imports
 import "@babylonjs/core/Lights/Shadows/shadowGeneratorSceneComponent";
+import "@babylonjs/core/Materials/standardMaterial";
 
 export interface SceneContext {
   engine: Engine;
